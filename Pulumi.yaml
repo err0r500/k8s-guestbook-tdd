@@ -1,0 +1,3 @@
+name: k8s-go-tdd
+runtime: go
+description: A minimal k8s Go Pulumi program and a test file
