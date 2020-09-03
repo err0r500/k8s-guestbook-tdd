@@ -1,42 +1,25 @@
-package deploy_nginx_test
+package tests
 
 import (
-	"context"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
-var clientset *kubernetes.Clientset
-
-func init() {
-	conf, err := clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	clientset, err = kubernetes.NewForConfig(conf)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func TestDeployment(t *testing.T) {
-	deployList, err := clientset.AppsV1().
-		Deployments(metav1.NamespaceDefault).
-		List(context.Background(),
-			metav1.ListOptions{
-				FieldSelector: "metadata.name=nginx",
-			})
+	dName := "nginx"
 
+	dd, err := deploymentsByName(dName)
 	assert.Equal(t, err, nil)
-	assert.Equal(t, len(deployList.Items), 1)
+	assert.Equal(t, len(dd), 1)
+	if t.Failed() {
+		return
+	}
 
-	deploy := deployList.Items[0]
-	assert.Equal(t, deploy.Name, "nginx")
-	assert.Equal(t, *deploy.Spec.Replicas, int32(2))
+	d := dd[0]
+	assert.Equal(t, d.Name, dName)
+	assert.GreaterOrEqual(t, *d.Spec.Replicas, int32(2))
+	assert.GreaterOrEqual(t, d.Status.Replicas, int32(1))
+	assert.Equal(t, d.Spec.Template.Labels["app"], dName)
+	assert.True(t, dockerImageIsVersionned(d.Spec.Template.Spec.Containers[0].Image))
 }

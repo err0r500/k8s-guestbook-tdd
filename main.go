@@ -8,13 +8,14 @@ import (
 )
 
 func myNginxDeployment(ctx *p.Context) error {
+	nginxInput := p.String("nginx")
 	appLabels := p.StringMap{
-		"app": p.String("nginx"),
+		"app": nginxInput,
 	}
 
 	deployment, err := appsv1.NewDeployment(ctx, "my-nginx-deployment", &appsv1.DeploymentArgs{
 		Metadata: metav1.ObjectMetaArgs{
-			Name: p.String("nginx"),
+			Name: nginxInput,
 		},
 		Spec: appsv1.DeploymentSpecArgs{
 			Selector: &metav1.LabelSelectorArgs{
@@ -28,8 +29,8 @@ func myNginxDeployment(ctx *p.Context) error {
 				Spec: &corev1.PodSpecArgs{
 					Containers: corev1.ContainerArray{
 						corev1.ContainerArgs{
-							Name:  p.String("nginx"),
-							Image: p.String("nginx"),
+							Name:  nginxInput,
+							Image: p.String("nginx:1.19.2"),
 						}},
 				},
 			},
