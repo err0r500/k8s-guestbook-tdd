@@ -1,8 +1,9 @@
-module tdd
+module github.com/err0r500/k8s-guestbook-tdd
 
 go 1.14
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20200819183940-29e1ff8eb0bb
 	github.com/google/go-cmp v0.4.1 // indirect
 	github.com/googleapis/gnostic v0.4.2 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect

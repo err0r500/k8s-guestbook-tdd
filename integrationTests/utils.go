@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	typesv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -23,6 +24,18 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func podsInNamespace(ns string) ([]v1.Pod, error) {
+	podList, err := clientset.CoreV1().
+		Pods(ns).List(
+		context.Background(), metav1.ListOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return podList.Items, nil
 }
 
 func deploymentsByName(name string) ([]typesv1.Deployment, error) {

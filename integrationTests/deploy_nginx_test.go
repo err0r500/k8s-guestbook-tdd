@@ -7,7 +7,7 @@ import (
 )
 
 func TestDeployment(t *testing.T) {
-	dName := "nginx"
+	dName := "redis-master"
 
 	dd, err := deploymentsByName(dName)
 	assert.Equal(t, err, nil)
@@ -17,9 +17,9 @@ func TestDeployment(t *testing.T) {
 	}
 
 	d := dd[0]
-	assert.Equal(t, d.Name, dName)
-	assert.GreaterOrEqual(t, *d.Spec.Replicas, int32(2))
-	assert.GreaterOrEqual(t, d.Status.Replicas, int32(1))
-	assert.Equal(t, d.Spec.Template.Labels["app"], dName)
+	assert.Equal(t, dName, d.ObjectMeta.Name)
+	assert.Equal(t, int32(1), *d.Spec.Replicas)
+	assert.Equal(t, int32(1), d.Status.Replicas)
+	assert.Equal(t, "redis", d.Spec.Template.Labels["app"])
 	assert.True(t, dockerImageIsVersionned(d.Spec.Template.Spec.Containers[0].Image))
 }
