@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+// TODO : fix the little pointer game with security contexts
 func TestSecurityContexts(t *testing.T) {
 	pp, err := podsInNamespace("default")
 	assert.Equal(t, err, nil)
@@ -25,7 +26,7 @@ func TestSecurityContexts(t *testing.T) {
 
 func isSafe(c *v1.SecurityContext, p *v1.PodSecurityContext) bool {
 	if c == nil {
-		return safePodSecurityContext(p)
+		return runsAsNonRootPod(p) || runsAsUserNotRootPod(p)
 	}
 
 	if privilegeEscalationAllowed(c) {
@@ -41,45 +42,28 @@ func isSafe(c *v1.SecurityContext, p *v1.PodSecurityContext) bool {
 	return true
 }
 
-// TODO : fix the little pointer game
 func runAsNonRootEnforced(c v1.SecurityContext, p *v1.PodSecurityContext) bool {
-	runAsNonRoot := false
-	if c.RunAsNonRoot == nil && c.RunAsUser == nil {
-		log.Println("pod level")
-		runAsNonRoot = safePodSecurityContext(p)
-	} else {
-		log.Println("container level")
-		runAsNonRoot = safeContainerSecurityContext(&c)
-	}
-	return runAsNonRoot
+	runAsNonRootEnforced := runsAsNonRootContainer(c) || (c.RunAsNonRoot == nil && runsAsNonRootPod(p))
+	runAsNotRootUserEnforced := runsAsUserNotRootContainer(c) || (c.RunAsUser == nil && runsAsUserNotRootPod(p))
+	return runAsNonRootEnforced || runAsNotRootUserEnforced
 }
 
-// container
 func privilegeEscalationAllowed(c *v1.SecurityContext) bool {
 	return c.AllowPrivilegeEscalation != nil && *c.AllowPrivilegeEscalation
 }
 
-func safeContainerSecurityContext(c *v1.SecurityContext) bool {
-	return runsAsNonRootContainer(c) || runsAsUserNotRootContainer(c)
-}
-
-func runsAsNonRootContainer(c *v1.SecurityContext) bool {
+func runsAsNonRootContainer(c v1.SecurityContext) bool {
 	return c.RunAsNonRoot != nil && *c.RunAsNonRoot
 }
 
-func runsAsUserNotRootContainer(c *v1.SecurityContext) bool {
+func runsAsUserNotRootContainer(c v1.SecurityContext) bool {
 	return c.RunAsUser != nil && *c.RunAsUser != int64(0)
 }
 
-// pod
-func safePodSecurityContext(c *v1.PodSecurityContext) bool {
-	return runsAsNonRoot(c) && runsAsUserNotRoot(c)
-}
-
-func runsAsNonRoot(c *v1.PodSecurityContext) bool {
+func runsAsNonRootPod(c *v1.PodSecurityContext) bool {
 	return c.RunAsNonRoot != nil && *c.RunAsNonRoot
 }
 
-func runsAsUserNotRoot(c *v1.PodSecurityContext) bool {
+func runsAsUserNotRootPod(c *v1.PodSecurityContext) bool {
 	return c.RunAsUser != nil && *c.RunAsUser != int64(0)
 }
