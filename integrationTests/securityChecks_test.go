@@ -34,12 +34,7 @@ func isSafe(c *v1.SecurityContext, p *v1.PodSecurityContext) bool {
 		return false
 	}
 
-	if !runAsNonRootEnforced(*c, p) {
-		log.Println("run as non root not enforced")
-		return false
-	}
-
-	return true
+	return runAsNonRootEnforced(*c, p)
 }
 
 func runAsNonRootEnforced(c v1.SecurityContext, p *v1.PodSecurityContext) bool {
